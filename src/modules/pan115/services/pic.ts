@@ -3,6 +3,7 @@ import type { Handler } from 'hono';
 import { Pan115Sdk } from '../../../libs/pan115/index.js';
 import { randomInt } from '../../../utils/number.js';
 import { fail, success } from '../../../utils/response.js';
+import { buildContentDisposition } from '../../../utils/string.js';
 import { bulkInsertPics, clearAllPics, getPicByIndex, getPicCount } from '../repositories/pic.js';
 import type { Pan115Env } from '../types.js';
 import { fetchRecursively } from '../utils.js';
@@ -40,7 +41,7 @@ export const getRandomPic: Handler<Pan115Env> = async (c) => {
     headers: {
       'Content-Type': fileInfo.mime,
       'Content-Length': res.headers.get('Content-Length') ?? fileInfo.file_size,
-      'Content-Disposition': `inline; filename="${fileInfo.file_name}"; filename*=UTF-8''${encodeURIComponent(fileInfo.file_name)}`,
+      'Content-Disposition': buildContentDisposition(fileInfo.file_name),
     },
   });
 };
