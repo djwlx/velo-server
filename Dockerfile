@@ -19,6 +19,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
@@ -30,4 +31,4 @@ VOLUME ["/app/data"]
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "mkdir -p data && pnpm db:migrate && { [ -f data/.env ] && node --env-file=data/.env dist/index.js || node dist/index.js; }"]
+CMD ["sh", "-c", "mkdir -p data && npm run db:migrate && { [ -f data/.env ] && node --env-file=data/.env dist/index.js || node dist/index.js; }"]
