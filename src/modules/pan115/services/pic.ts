@@ -52,22 +52,29 @@ export const cacheFileIdInDB: Handler<Pan115Env> = async (c) => {
   const delayMs = body.delayMs ?? 500;
   const client115 = new Pan115Sdk(cookie);
 
-  void fetchRecursively(
-    client115,
-    cid,
-    ({ parentCid, items }) => {
-      const pics = items.filter((item) => item.class === 'PIC' && item.pc);
-      const rows = pics.map(({ pc, class: fileClass }) => ({
-        pc_code: pc,
-        class: fileClass,
-        cid: parentCid,
-      }));
-      bulkInsertPics(rows);
-    },
-    { delayMs },
-  ).catch((error: unknown) => {
-    c.var.logger.error({ error }, 'cache 115 files failed');
-  });
+  let total = 0;
+  void (async () => {
+    try {
+      await fetchRecursively(
+        client115,
+        cid,
+        ({ parentCid, items }) => {
+          const pics = items.filter((item) => item.class === 'PIC' && item.pc);
+          const rows = pics.map(({ pc, class: fileClass }) => ({
+            pc_code: pc,
+            class: fileClass,
+            cid: parentCid,
+          }));
+          total += rows.length;
+          bulkInsertPics(rows);
+        },
+        { delayMs },
+      );
+      c.var.logger.info({ cid, total }, 'cache 115 files done');
+    } catch (error) {
+      c.var.logger.error({ error }, 'cache 115 files failed');
+    }
+  })();
 
   return c.json(success({ cid, started: true }));
 };
