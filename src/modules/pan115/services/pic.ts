@@ -3,7 +3,7 @@ import type { Handler } from 'hono';
 import { Pan115Sdk } from '../../../libs/pan115/index.js';
 import { randomInt } from '../../../utils/number.js';
 import { fail, success } from '../../../utils/response.js';
-import { bulkInsertPics, getPicByIndex, getPicCount } from '../repositories/pic.js';
+import { bulkInsertPics, clearAllPics, getPicByIndex, getPicCount } from '../repositories/pic.js';
 import type { Pan115Env } from '../types.js';
 import { fetchRecursively } from '../utils.js';
 
@@ -70,4 +70,9 @@ export const cacheFileIdInDB: Handler<Pan115Env> = async (c) => {
   });
 
   return c.json(success({ cid, started: true }));
+};
+
+export const clearPicsHandler: Handler<Pan115Env> = (c) => {
+  clearAllPics();
+  return c.json(success({ cleared: true }));
 };

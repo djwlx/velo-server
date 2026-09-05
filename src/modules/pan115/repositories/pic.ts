@@ -17,3 +17,7 @@ export function bulkInsertPics(pics: Array<typeof files115.$inferInsert>): numbe
   const result = db.insert(files115).values(pics).onConflictDoNothing().run();
   return result.changes;
 }
+
+export function clearAllPics(): number {
+  return db.delete(files115).run().changes;
+}
