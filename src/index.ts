@@ -1,11 +1,20 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { requestId } from 'hono/request-id';
+
+import { loggerMiddleware } from './middleware/logger.js';
+import { api } from './routes/index.js';
 
 const app = new Hono();
 
+app.use(requestId());
+
+app.use(loggerMiddleware());
+
 app.get('/', (c) => {
-  return c.text('Hello Hono!');
+  return c.text('Hello velo!');
 });
+app.route('/api', api);
 
 serve(
   {
@@ -13,6 +22,6 @@ serve(
     port: 3000,
   },
   (info) => {
-    console.log(`Server is running on http://localhost:${info.port}`);
+    console.log(`Server is running on port:${info.port}`);
   },
 );
