@@ -18,23 +18,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: corepack enable && pnpm install --frozen-lockfile
-
-      - name: Build Source
-        run: pnpm build
-
-      - name: Generate Release Notes
-        run: |
-          cat > release-notes.md <<'EOF'
-          ${{ github.ref_name }}
-          EOF
-
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -66,15 +49,17 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/velo-server:latest
             ghcr.io/${{ github.repository_owner }}/velo-server:${{ github.ref_name }}
 
-      - name: Compress dist folder
-        run: |
-          cd dist
-          zip -r ../app.zip .
-          cd ..
+      - name: Docker Hub Description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/velo-server
+          short-description: Velo 115 图片缓存服务
+          readme-filepath: ./README.md
 
-      - name: Upload Release
+      - name: Publish Release
         uses: softprops/action-gh-release@v2
         with:
-          body_path: release-notes.md
-          files: app.zip
+          name: ${{ github.ref_name }}
           prerelease: false
