@@ -40,6 +40,7 @@ export const getRandomPic: Handler<Pan115Env> = async (c) => {
     headers: {
       'Content-Type': fileInfo.mime,
       'Content-Length': res.headers.get('Content-Length') ?? fileInfo.file_size,
+      'Content-Disposition': `inline; filename="${fileInfo.file_name}"; filename*=UTF-8''${encodeURIComponent(fileInfo.file_name)}`,
     },
   });
 };
