@@ -1,0 +1,80 @@
+name: Build Docker Image
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: corepack enable && pnpm install --frozen-lockfile
+
+      - name: Build Source
+        run: pnpm build
+
+      - name: Generate Release Notes
+        run: |
+          cat > release-notes.md <<'EOF'
+          ${{ github.ref_name }}
+          EOF
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/velo-server:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/velo-server:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/velo-server:latest
+            ghcr.io/${{ github.repository_owner }}/velo-server:${{ github.ref_name }}
+
+      - name: Compress dist folder
+        run: |
+          cd dist
+          zip -r ../app.zip .
+          cd ..
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: app.zip
+          prerelease: false
