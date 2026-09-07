@@ -1,5 +1,6 @@
 {
   "name": "velo-server",
+  "version": "0.0.3",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --env-file=.env src/index.ts",

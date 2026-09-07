@@ -4,6 +4,7 @@ import { requestId } from 'hono/request-id';
 
 import { loggerMiddleware } from './middleware/logger.js';
 import { api } from './routes/index.js';
+import { getAppVersion } from './utils/version.js';
 
 const app = new Hono();
 
@@ -12,7 +13,7 @@ app.use(requestId());
 app.use(loggerMiddleware());
 
 app.get('/', (c) => {
-  return c.text('Hello velo!');
+  return c.text(`Hello velo! v${getAppVersion()}`);
 });
 app.route('/api', api);
 
