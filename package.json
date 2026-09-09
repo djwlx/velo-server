@@ -3,7 +3,7 @@
   "version": "0.0.5",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch --env-file=.env src/index.ts",
+    "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
     "start": "node --env-file=.env dist/index.js",
     "db:push": "drizzle-kit push",

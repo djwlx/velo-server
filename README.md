@@ -1,8 +1,14 @@
 ```
-npm install
-npm run dev
+Node Version: 24.20.0
+pnpm Version: 10.27.0
 ```
 
+
+
 ```
-open http://localhost:3000
+pnpm install
+mkdir data
+pnpm run db:migrate
+pnpm run dev
 ```
+

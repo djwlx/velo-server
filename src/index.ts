@@ -1,5 +1,6 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { requestId } from 'hono/request-id';
 
 import { loggerMiddleware } from './middleware/logger.js';
@@ -8,6 +9,7 @@ import { getAppVersion } from './utils/version.js';
 
 const app = new Hono();
 
+app.use('*', cors({ origin: '*' }));
 app.use(requestId());
 
 app.use(loggerMiddleware());
