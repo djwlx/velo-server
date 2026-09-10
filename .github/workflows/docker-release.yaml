@@ -39,8 +39,8 @@ jobs:
       - name: Build web
         working-directory: velo-web
         run: |
-          pnpm install --frozen-lockfile
-          pnpm build
+          pnpm install --frozen-lockfile --ignore-workspace
+          pnpm --ignore-workspace build
 
       - name: Update public
         run: |
