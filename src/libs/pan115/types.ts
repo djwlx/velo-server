@@ -1,13 +1,57 @@
 export type FileItem = {
+  fid: string;
+  uid: number;
+  aid: number;
+  cid: string;
+  n: string;
+  s: number;
+  sta: number;
+  pt: string;
+  pc: string;
+  fc: number;
+  p: number;
+  m: number;
+  star_time: number;
+  t: string;
+  te: string;
+  tp: string;
+  tu: string;
+  to: number;
+  d: number;
+  c: number;
+  sh: number;
+  e: string;
+  ico: string;
+  class?: string;
+  fatr: string;
+  fdes: number;
+  sha: string;
+  q: number;
+  hdf: number;
+  et: number;
+  epos: string;
+  fvs: number;
+  check_code: number;
+  check_msg: string;
+  fuuid: number;
+  ec: number;
+  fl: unknown[];
+  ms: number;
+  u: string;
+  score: number;
+  is_top: number;
+};
+
+export type DirItem = {
   cid: string;
   aid: string;
   pid: string;
   n: string;
-  pc: string;
   m: number;
   star_time: number;
   cc: string;
   sh: string;
+  pc: string;
   t: string;
   te: string;
   tu: string;
@@ -30,9 +74,11 @@ export type FileItem = {
   issct: number;
   score: number;
   is_top: number;
-  fid?: string;
-  class?: string;
+  fid?: undefined;
+  class?: undefined;
 };
+
+export type FileListItem = FileItem | DirItem;
 
 export type PathItem = {
   name: string;
@@ -43,7 +89,7 @@ export type PathItem = {
 };
 
 export type FileListResponse = {
-  data: FileItem[];
+  data: FileListItem[];
   count: number;
   sys_count: number;
   page_size: number;

@@ -46,6 +46,7 @@ export const getFiles: Handler<Pan115Env> = async (c) => {
       pickCode: item.pc || null,
       isDirectory: !item.fid,
       type: item.class || null,
+      size: item.fid ? item.s : 0,
     }));
 
     return c.json(

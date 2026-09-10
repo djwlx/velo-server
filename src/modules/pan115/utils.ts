@@ -1,8 +1,8 @@
-import type { FileItem, Pan115Sdk } from '../../libs/pan115/index.js';
+import type { FileListItem, Pan115Sdk } from '../../libs/pan115/index.js';
 
 export type TraversePage = {
   parentCid: string;
-  items: FileItem[];
+  items: FileListItem[];
 };
 
 export type TraverseOptions = {
