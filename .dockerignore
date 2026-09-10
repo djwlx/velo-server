@@ -3,6 +3,7 @@
 node_modules
 dist
 data
+velo-web
 .env
 .env.production
 *.log

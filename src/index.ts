@@ -1,11 +1,11 @@
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { requestId } from 'hono/request-id';
 
 import { loggerMiddleware } from './middleware/logger.js';
 import { api } from './routes/index.js';
-import { getAppVersion } from './utils/version.js';
 
 const app = new Hono();
 
@@ -14,10 +14,13 @@ app.use(requestId());
 
 app.use(loggerMiddleware());
 
-app.get('/', (c) => {
-  return c.text(`Hello velo! v${getAppVersion()}`);
-});
 app.route('/api', api);
+
+app.use('*', serveStatic({ root: './public' }));
+app.get('*', (c, next) => {
+  if (c.req.path.startsWith('/api')) return next();
+  return serveStatic({ root: './public', path: 'index.html' })(c, next);
+});
 
 serve(
   {
