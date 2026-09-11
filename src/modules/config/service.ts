@@ -2,6 +2,7 @@ import type { Handler } from 'hono';
 
 import { decrypt, encrypt } from '../../libs/crypto.js';
 import { fail, success } from '../../utils/response.js';
+import { getAppVersion } from '../../utils/version.js';
 import { deleteConfig, getConfig, setConfig } from './repository.js';
 import type { ConfigKey } from './types.js';
 import { isConfigKey, isSensitive } from './utils.js';
@@ -18,6 +19,10 @@ export const setConfigHandler: Handler = async (c) => {
   if (body.value === undefined) return c.json(fail('value is required', 400));
   setConfig(body.key, isSensitive(body.key) ? encrypt(body.value) : body.value);
   return c.json(success({ key: body.key }));
+};
+
+export const getVersionHandler: Handler = (c) => {
+  return c.json(success({ version: getAppVersion() }));
 };
 
 export const deleteConfigHandler: Handler = (c) => {
