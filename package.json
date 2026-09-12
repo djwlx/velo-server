@@ -1,6 +1,6 @@
 {
   "name": "velo-server",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "type": "module",
   "scripts": {
     "dev": "NODE_TLS_REJECT_UNAUTHORIZED=0 tsx watch --env-file=.env src/index.ts",
