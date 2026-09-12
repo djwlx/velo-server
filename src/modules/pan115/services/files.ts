@@ -49,12 +49,18 @@ export const getFiles: Handler<Pan115Env> = async (c) => {
       size: item.fid ? item.s : 0,
     }));
 
+    const path = (result.path ?? []).map((item) => ({
+      cid: item.cid,
+      name: item.name,
+    }));
+
     return c.json(
       success({
         cid,
         page,
         pageSize,
         total: result.count,
+        path,
         items,
       }),
     );
