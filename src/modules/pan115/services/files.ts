@@ -98,7 +98,7 @@ export const getFile: Handler<Pan115Env> = async (c) => {
         'Cache-Control': 'private, no-store',
         'Content-Type': fileInfo.mime,
         'Content-Length': response.headers.get('Content-Length') ?? fileInfo.file_size,
-        'Content-Disposition': buildContentDisposition(fileInfo.file_name),
+        'Content-Disposition': buildContentDisposition(fileInfo.file_name, 'attachment'),
       },
     });
   } catch (error) {
