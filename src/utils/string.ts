@@ -1,3 +1,12 @@
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export function sanitizeFilename(filename: string): string {
   return filename.replace(/[^\x20-\x21\x23-\x7e]/g, '_').trim().slice(0, 255);
 }

@@ -6,7 +6,7 @@ import { rootLogger } from '../../../libs/logger.js';
 import { Pan115Sdk } from '../../../libs/pan115/index.js';
 import { randomInt } from '../../../utils/number.js';
 import { fail, success } from '../../../utils/response.js';
-import { buildContentDisposition } from '../../../utils/string.js';
+import { buildContentDisposition, escapeHtml } from '../../../utils/string.js';
 import { bulkInsertPics, clearAllPics, getPicByIndex, getPicCount } from '../repositories/pic.js';
 import type { Pan115Env } from '../types.js';
 import { fetchRecursively } from '../utils.js';
@@ -16,8 +16,10 @@ const PIC_CACHE_LOCK_KEY = 'pan115-pic-cache';
 export const getRandomPic: Handler<Pan115Env> = async (c) => {
   const cookie = c.get('cookie115');
   const userAgent = c.req.header('User-Agent');
-  const isModeJson = c.req.query('mode') === 'json';
-  const client115 = new Pan115Sdk(cookie, isModeJson ? userAgent : '');
+  const mode = c.req.query('mode');
+  const isModeJson = mode === 'json';
+  const isModeHtml = mode === 'html';
+  const client115 = new Pan115Sdk(cookie, isModeJson || isModeHtml ? userAgent : '');
   const count = getPicCount();
   if (!count) {
     return c.json(fail('no cached pic', ErrorCode.ResourceNotFound), 404);
@@ -30,6 +32,14 @@ export const getRandomPic: Handler<Pan115Env> = async (c) => {
   const fileInfo = await client115.getFile(pic.pc_code);
   if (isModeJson) {
     return c.json(success(fileInfo));
+  }
+
+  if (isModeHtml) {
+    const url = escapeHtml(fileInfo.url);
+    const name = escapeHtml(fileInfo.file_name);
+    return c.html(
+      `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${name}</title></head><body style="margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#000"><img src="${url}" alt="${name}" style="max-width:100%;max-height:100vh"></body></html>`,
+    );
   }
 
   const res = await fetch(fileInfo.url, {
