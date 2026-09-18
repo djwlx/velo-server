@@ -1,6 +1,7 @@
 import type { Handler } from 'hono';
 
 import { Pan115Sdk } from '../../../libs/pan115/index.js';
+import { ErrorCode } from '../../../config/error-code.js';
 import { fail, success } from '../../../utils/response.js';
 import { buildContentDisposition } from '../../../utils/string.js';
 import type { Pan115Env } from '../types.js';
@@ -26,7 +27,7 @@ export const getFiles: Handler<Pan115Env> = async (c) => {
     return c.json(
       fail(
         `page must be a positive integer and pageSize must be between 1 and ${MAX_PAGE_SIZE}`,
-        400,
+        ErrorCode.ValidationFailed,
       ),
       400,
     );
@@ -36,7 +37,7 @@ export const getFiles: Handler<Pan115Env> = async (c) => {
     const sdk = new Pan115Sdk(c.get('cookie115'), c.req.header('User-Agent'));
     const offset = (page - 1) * pageSize;
     if (!Number.isSafeInteger(offset)) {
-      return c.json(fail('page is too large', 400), 400);
+      return c.json(fail('page is too large', ErrorCode.ValidationFailed), 400);
     }
     const result = await sdk.getFileList(offset, pageSize, cid);
 
@@ -69,14 +70,14 @@ export const getFiles: Handler<Pan115Env> = async (c) => {
       { error: error instanceof Error ? error.message : 'unknown error', cid },
       '115 file list failed',
     );
-    return c.json(fail('failed to fetch 115 files', 502), 502);
+    return c.json(fail('failed to fetch 115 files', ErrorCode.ExternalServiceFailed), 502);
   }
 };
 
 export const getFile: Handler<Pan115Env> = async (c) => {
   const pickCode = c.req.param('pickCode')?.trim() ?? '';
   if (!pickCode) {
-    return c.json(fail('pickCode is required', 400), 400);
+    return c.json(fail('pickCode is required', ErrorCode.ValidationFailed), 400);
   }
 
   try {
@@ -89,7 +90,7 @@ export const getFile: Handler<Pan115Env> = async (c) => {
     });
 
     if (!response.ok || !response.body) {
-      return c.json(fail('failed to download 115 file', 502), 502);
+      return c.json(fail('failed to download 115 file', ErrorCode.ExternalServiceFailed), 502);
     }
 
     return new Response(response.body, {
@@ -106,6 +107,6 @@ export const getFile: Handler<Pan115Env> = async (c) => {
       { error: error instanceof Error ? error.message : 'unknown error' },
       '115 file download failed',
     );
-    return c.json(fail('failed to download 115 file', 502), 502);
+      return c.json(fail('failed to download 115 file', ErrorCode.ExternalServiceFailed), 502);
   }
 };

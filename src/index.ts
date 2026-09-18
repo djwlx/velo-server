@@ -3,11 +3,14 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { requestId } from 'hono/request-id';
 
+import { errorHandler } from './modules/error/handler.js';
 import { loggerMiddleware } from './middleware/logger.js';
 import { webMiddleware } from './middleware/web.js';
 import { api } from './routes/index.js';
 
 const app = new Hono();
+
+app.onError(errorHandler);
 
 app.use('*', cors({ origin: '*' }));
 app.use(requestId());

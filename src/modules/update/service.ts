@@ -4,9 +4,13 @@ import { cp, mkdir, readdir, readFile, rename, rm, symlink, writeFile } from 'no
 import { join, resolve } from 'node:path';
 
 import { extract } from 'tar';
+import { fetch, ProxyAgent } from 'undici';
+import type { RequestInit } from 'undici';
 
+import { ENV } from '../../config/env.js';
 import { rootLogger } from '../../libs/logger.js';
 import { getAppVersion } from '../../utils/version.js';
+import { runExclusive } from '../../libs/async-lock.js';
 
 const WEB_DIR = resolve('./data/web');
 const SEED_DIR = resolve('./public');
@@ -24,6 +28,28 @@ interface WebVersion {
 }
 
 const logger = rootLogger.child({ module: 'update' });
+
+const createProxyAgent = (proxy?: string) => {
+  if (!proxy) return undefined;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(proxy);
+  } catch {
+    throw new Error('UPDATE_PROXY must be a valid URL');
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('UPDATE_PROXY must use http or https');
+  }
+
+  return new ProxyAgent(parsed.toString());
+};
+
+const updateProxyAgent = createProxyAgent(ENV.updateProxy);
+
+const updateFetch = (input: string, init?: RequestInit) =>
+  fetch(input, { ...init, dispatcher: updateProxyAgent });
 
 const readVersion = async (dir: string): Promise<string | undefined> => {
   try {
@@ -77,7 +103,7 @@ const cleanupReleases = async (activeVersion: string) => {
 };
 
 const fetchLatest = async (): Promise<WebVersion | undefined> => {
-  const response = await fetch(`${RELEASE_BASE}/latest.json`, {
+  const response = await updateFetch(`${RELEASE_BASE}/latest.json`, {
     headers: { 'User-Agent': 'velo-server' },
   });
   if (!response.ok) {
@@ -93,7 +119,7 @@ const applyUpdate = async (latest: WebVersion) => {
   const releaseDir = join(RELEASES_DIR, latest.version);
 
   if (!existsSync(releaseDir)) {
-    const response = await fetch(`${RELEASE_BASE}/${latest.file}`, {
+    const response = await updateFetch(`${RELEASE_BASE}/${latest.file}`, {
       headers: { 'User-Agent': 'velo-server' },
     });
     if (!response.ok) {
@@ -139,8 +165,6 @@ export const checkUpdate = async (): Promise<UpdateStatus> => {
   };
 };
 
-let pendingUpdate: Promise<string> | undefined;
-
 const performUpdate = async () => {
   const latest = await fetchLatest();
   if (!latest) throw new Error('no web release found');
@@ -152,12 +176,7 @@ const performUpdate = async () => {
   return latest.version;
 };
 
-export const updateToLatest = () => {
-  pendingUpdate ??= performUpdate().finally(() => {
-    pendingUpdate = undefined;
-  });
-  return pendingUpdate;
-};
+export const updateToLatest = () => runExclusive(performUpdate, 'web-update');
 
 const ensureSeeded = async () => {
   if (!existsSync(CURRENT_LINK)) {

@@ -1,6 +1,7 @@
 import type { Handler } from 'hono';
 
 import { decrypt, encrypt } from '../../libs/crypto.js';
+import { ErrorCode } from '../../config/error-code.js';
 import { fail, success } from '../../utils/response.js';
 import { getAppVersion } from '../../utils/version.js';
 import {
@@ -20,8 +21,12 @@ export function getConfigValue(key: ConfigKey): string | undefined {
 
 export const setConfigHandler: Handler = async (c) => {
   const body = await c.req.json<{ key?: string; value?: string }>();
-  if (!body.key || !isConfigKey(body.key)) return c.json(fail('invalid config key', 400));
-  if (body.value === undefined) return c.json(fail('value is required', 400));
+  if (!body.key || !isConfigKey(body.key)) {
+    return c.json(fail('invalid config key', ErrorCode.ValidationFailed), 400);
+  }
+  if (body.value === undefined) {
+    return c.json(fail('value is required', ErrorCode.ValidationFailed), 400);
+  }
   setConfig(body.key, isSensitive(body.key) ? encrypt(body.value) : body.value);
   return c.json(success({ key: body.key }));
 };
@@ -39,9 +44,9 @@ export const updateWebHandler: Handler = async (c) => {
   try {
     const version = await updateToLatest();
     return c.json(success({ version }));
-  } catch (error) {
+  } catch {
     return c.json(
-      fail(error instanceof Error ? error.message : 'update failed', 502),
+      fail('update failed', ErrorCode.ExternalServiceFailed),
       502,
     );
   }
@@ -49,7 +54,9 @@ export const updateWebHandler: Handler = async (c) => {
 
 export const deleteConfigHandler: Handler = (c) => {
   const key = c.req.param('key') ?? '';
-  if (!isConfigKey(key)) return c.json(fail('invalid config key'), 400);
+  if (!isConfigKey(key)) {
+    return c.json(fail('invalid config key', ErrorCode.ValidationFailed), 400);
+  }
   deleteConfig(key);
   return c.json(success({ key }));
 };

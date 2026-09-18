@@ -12,7 +12,7 @@ export function loggerMiddleware(): MiddlewareHandler {
       });
     },
     onResponse: (logger, c, elapsedMs) => {
-      if (c.req.path.startsWith('/.well-known/')) return;
+      if (!c.req.path.startsWith('/api')) return;
       logger.info(
         {
           method: c.req.method,

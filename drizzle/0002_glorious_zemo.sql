@@ -1,0 +1,1 @@
+ALTER TABLE `velo_users` ADD `nickname` text DEFAULT '' NOT NULL;

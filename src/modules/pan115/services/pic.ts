@@ -1,5 +1,8 @@
 import type { Handler } from 'hono';
 
+import { isRunning, runExclusive } from '../../../libs/async-lock.js';
+import { ErrorCode } from '../../../config/error-code.js';
+import { rootLogger } from '../../../libs/logger.js';
 import { Pan115Sdk } from '../../../libs/pan115/index.js';
 import { randomInt } from '../../../utils/number.js';
 import { fail, success } from '../../../utils/response.js';
@@ -8,6 +11,8 @@ import { bulkInsertPics, clearAllPics, getPicByIndex, getPicCount } from '../rep
 import type { Pan115Env } from '../types.js';
 import { fetchRecursively } from '../utils.js';
 
+const PIC_CACHE_LOCK_KEY = 'pan115-pic-cache';
+
 export const getRandomPic: Handler<Pan115Env> = async (c) => {
   const cookie = c.get('cookie115');
   const userAgent = c.req.header('User-Agent');
@@ -15,11 +20,11 @@ export const getRandomPic: Handler<Pan115Env> = async (c) => {
   const client115 = new Pan115Sdk(cookie, isModeJson ? userAgent : '');
   const count = getPicCount();
   if (!count) {
-    return c.json(fail('no cached pic', 404));
+    return c.json(fail('no cached pic', ErrorCode.ResourceNotFound), 404);
   }
   const pic = getPicByIndex(randomInt(0, count - 1));
   if (!pic) {
-    return c.json(fail('no cached pic', 404));
+    return c.json(fail('no cached pic', ErrorCode.ResourceNotFound), 404);
   }
 
   const fileInfo = await client115.getFile(pic.pc_code);
@@ -47,15 +52,19 @@ export const getRandomPic: Handler<Pan115Env> = async (c) => {
 };
 
 export const cacheFileIdInDB: Handler<Pan115Env> = async (c) => {
+  if (isRunning(PIC_CACHE_LOCK_KEY)) {
+    return c.json(fail('pic cache is already running', ErrorCode.ResourceConflict), 409);
+  }
+
   const cookie = c.get('cookie115');
   const body = await c.req.json<{ cid?: string; delayMs?: number }>();
   const cid = body.cid;
-  if (!cid) return c.json(fail('cid is required', 400));
+  if (!cid) return c.json(fail('cid is required', ErrorCode.ValidationFailed), 400);
   const delayMs = body.delayMs ?? 500;
   const client115 = new Pan115Sdk(cookie);
 
   let total = 0;
-  void (async () => {
+  void runExclusive(async () => {
     try {
       await fetchRecursively(
         client115,
@@ -72,16 +81,19 @@ export const cacheFileIdInDB: Handler<Pan115Env> = async (c) => {
         },
         { delayMs },
       );
-      c.var.logger.info({ cid, total }, 'cache 115 files done');
+      rootLogger.info({ cid, total }, 'cache 115 files done');
     } catch (error) {
-      c.var.logger.error({ error }, 'cache 115 files failed');
+      rootLogger.error({ err: error, cid }, 'cache 115 files failed');
     }
-  })();
+  }, PIC_CACHE_LOCK_KEY);
 
   return c.json(success({ cid, started: true }));
 };
 
 export const clearPicsHandler: Handler<Pan115Env> = (c) => {
+  if (isRunning(PIC_CACHE_LOCK_KEY)) {
+    return c.json(fail('pic cache is already running', ErrorCode.ResourceConflict), 409);
+  }
   clearAllPics();
   return c.json(success({ cleared: true }));
 };

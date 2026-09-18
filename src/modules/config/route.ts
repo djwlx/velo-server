@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 
+import { requirePermission } from '../../middleware/auth.js';
 import {
   checkUpdateHandler,
   deleteConfigHandler,
@@ -9,6 +10,8 @@ import {
 } from './service.js';
 
 export const configRoute = new Hono();
+
+configRoute.use('*', requirePermission('module:config'));
 
 configRoute.get('/version', getVersionHandler);
 configRoute.get('/version/check', checkUpdateHandler);
