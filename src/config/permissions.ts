@@ -8,6 +8,12 @@ export const PERMISSIONS = [
     description: 'Access 115 file and picture APIs',
   },
   {
+    code: 'module:auth',
+    module: 'auth',
+    name: 'Auth module access',
+    description: 'Manage users and roles, view permissions',
+  },
+  {
     module: 'config',
     code: 'module:config',
     name: 'Config module access',

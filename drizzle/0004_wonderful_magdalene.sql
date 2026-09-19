@@ -1,0 +1,1 @@
+ALTER TABLE `velo_users` ADD `avatar` text DEFAULT '' NOT NULL;
