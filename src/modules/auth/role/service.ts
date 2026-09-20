@@ -72,9 +72,9 @@ export const listRolesHandler: Handler = (c) => {
 
 export const getRoleHandler: Handler = (c) => {
   const roleId = parseId(c.req.param('id'));
-  if (!roleId) return c.json(fail('invalid role id', ErrorCode.ValidationFailed), 400);
+  if (!roleId) return c.json(fail('invalidRoleId', ErrorCode.ValidationFailed), 400);
   const role = getRoleById(roleId);
-  if (!role) return c.json(fail('role not found', ErrorCode.ResourceNotFound), 404);
+  if (!role) return c.json(fail('roleNotFound', ErrorCode.ResourceNotFound), 404);
   return c.json(
     success({ role: toRoleDetail(role, getRolePermissions(roleId), countRoleUsers(roleId)) }),
   );
@@ -85,33 +85,33 @@ export const createRoleHandler: Handler = async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json(fail('invalid request body', ErrorCode.InvalidRequest), 400);
+    return c.json(fail('invalidRequest', ErrorCode.InvalidRequest), 400);
   }
 
   if (typeof body.code !== 'string') {
-    return c.json(fail('invalid role code', ErrorCode.ValidationFailed), 400);
+    return c.json(fail('invalidRoleCode', ErrorCode.ValidationFailed), 400);
   }
   const code = body.code.trim();
   if (!code || code.length > MAX_CODE_LENGTH || !CODE_PATTERN.test(code)) {
-    return c.json(fail('invalid role code', ErrorCode.ValidationFailed), 400);
+    return c.json(fail('invalidRoleCode', ErrorCode.ValidationFailed), 400);
   }
   if (typeof body.name !== 'string') {
-    return c.json(fail('invalid role name', ErrorCode.ValidationFailed), 400);
+    return c.json(fail('invalidRoleName', ErrorCode.ValidationFailed), 400);
   }
   const name = body.name.trim();
   if (!name || name.length > MAX_NAME_LENGTH) {
-    return c.json(fail('invalid role name', ErrorCode.ValidationFailed), 400);
+    return c.json(fail('invalidRoleName', ErrorCode.ValidationFailed), 400);
   }
 
   let permissionCodes: Permission[] = [];
   if (body.permissionCodes !== undefined) {
     const parsed = parsePermissionCodes(body.permissionCodes);
-    if (!parsed) return c.json(fail('invalid permission codes', ErrorCode.ValidationFailed), 400);
+    if (!parsed) return c.json(fail('invalidPermissionCodes', ErrorCode.ValidationFailed), 400);
     permissionCodes = parsed;
   }
 
   if (getRoleByCode(code)) {
-    return c.json(fail('role code already exists', ErrorCode.ResourceConflict), 409);
+    return c.json(fail('roleCodeExists', ErrorCode.ResourceConflict), 409);
   }
 
   const created = db.transaction((tx) => {
@@ -120,39 +120,39 @@ export const createRoleHandler: Handler = async (c) => {
     setRolePermissions(tx, role.id, permissionCodes);
     return role;
   });
-  if (!created) return c.json(fail('role code already exists', ErrorCode.ResourceConflict), 409);
+  if (!created) return c.json(fail('roleCodeExists', ErrorCode.ResourceConflict), 409);
 
   return c.json(success({ role: toRoleDetail(created, permissionCodes, 0) }), 201);
 };
 
 export const updateRoleHandler: Handler = async (c) => {
   const roleId = parseId(c.req.param('id'));
-  if (!roleId) return c.json(fail('invalid role id', ErrorCode.ValidationFailed), 400);
+  if (!roleId) return c.json(fail('invalidRoleId', ErrorCode.ValidationFailed), 400);
   const role = getRoleById(roleId);
-  if (!role) return c.json(fail('role not found', ErrorCode.ResourceNotFound), 404);
+  if (!role) return c.json(fail('roleNotFound', ErrorCode.ResourceNotFound), 404);
 
   let body: { name?: unknown; permissionCodes?: unknown };
   try {
     body = await c.req.json();
   } catch {
-    return c.json(fail('invalid request body', ErrorCode.InvalidRequest), 400);
+    return c.json(fail('invalidRequest', ErrorCode.InvalidRequest), 400);
   }
 
   let name = role.name;
   if (body.name !== undefined) {
     if (typeof body.name !== 'string') {
-      return c.json(fail('invalid role name', ErrorCode.ValidationFailed), 400);
+      return c.json(fail('invalidRoleName', ErrorCode.ValidationFailed), 400);
     }
     name = body.name.trim();
     if (!name || name.length > MAX_NAME_LENGTH) {
-      return c.json(fail('invalid role name', ErrorCode.ValidationFailed), 400);
+      return c.json(fail('invalidRoleName', ErrorCode.ValidationFailed), 400);
     }
   }
 
   let permissionCodes: Permission[] | undefined;
   if (body.permissionCodes !== undefined) {
     const parsed = parsePermissionCodes(body.permissionCodes);
-    if (!parsed) return c.json(fail('invalid permission codes', ErrorCode.ValidationFailed), 400);
+    if (!parsed) return c.json(fail('invalidPermissionCodes', ErrorCode.ValidationFailed), 400);
     permissionCodes = parsed;
   }
 
@@ -161,7 +161,7 @@ export const updateRoleHandler: Handler = async (c) => {
     if (permissionCodes !== undefined) setRolePermissions(tx, roleId, permissionCodes);
     return next;
   });
-  if (!updated) return c.json(fail('role not found', ErrorCode.ResourceNotFound), 404);
+  if (!updated) return c.json(fail('roleNotFound', ErrorCode.ResourceNotFound), 404);
 
   return c.json(
     success({
@@ -176,11 +176,11 @@ export const updateRoleHandler: Handler = async (c) => {
 
 export const deleteRoleHandler: Handler = (c) => {
   const roleId = parseId(c.req.param('id'));
-  if (!roleId) return c.json(fail('invalid role id', ErrorCode.ValidationFailed), 400);
+  if (!roleId) return c.json(fail('invalidRoleId', ErrorCode.ValidationFailed), 400);
   const role = getRoleById(roleId);
-  if (!role) return c.json(fail('role not found', ErrorCode.ResourceNotFound), 404);
+  if (!role) return c.json(fail('roleNotFound', ErrorCode.ResourceNotFound), 404);
   if (role.code === ADMIN_ROLE) {
-    return c.json(fail('cannot delete admin role', ErrorCode.ValidationFailed), 400);
+    return c.json(fail('cannotDeleteAdminRole', ErrorCode.ValidationFailed), 400);
   }
   deleteRole(db, roleId);
   return c.json(success({ id: roleId }));

@@ -12,6 +12,6 @@ export const listPermissionsHandler: Handler = (c) => c.json(success({ list: PER
 export const getPermissionHandler: Handler = (c) => {
   const code = c.req.param('code');
   const permission = PERMISSIONS.find((item) => item.code === code);
-  if (!permission) return c.json(fail('permission not found', ErrorCode.ResourceNotFound), 404);
+  if (!permission) return c.json(fail('permissionNotFound', ErrorCode.ResourceNotFound), 404);
   return c.json(success({ permission }));
 };

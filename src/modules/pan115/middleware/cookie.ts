@@ -8,7 +8,7 @@ import type { Pan115Env } from '../types.js';
 
 export const injectCookie: MiddlewareHandler<Pan115Env> = async (c, next) => {
   const cookie = getConfigValue(ConfigKey.cookie115);
-  if (!cookie) return c.json(fail('cookie115 not configured', ErrorCode.ConfigurationMissing), 503);
+  if (!cookie) return c.json(fail('cookie115Missing', ErrorCode.ConfigurationMissing), 503);
   c.set('cookie115', cookie);
   await next();
 };
